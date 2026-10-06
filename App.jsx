@@ -3,9 +3,12 @@ import "./App.css";
 
 const usernames = ["Alan", "Bob", "Carol", "Dean", "Elin"];
 
+const reactionEmojis = ["❤️", "😂", "👍", "😍", "😢", "😮", "😡", "🎉"];
+
 function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [openReactionId, setOpenReactionId] = useState(null);
 
   const sendMessage = () => {
     if (!message.trim()) return;
@@ -17,21 +20,29 @@ function App() {
       id: crypto.randomUUID(),
       username: randomUsername,
       text: message.trim(),
-      likes: 0,
+      reactions: {},
     };
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setMessage("");
   };
 
-  const likeMessage = (id) => {
+  const addReaction = (id, emoji) => {
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
         msg.id === id
-          ? { ...msg, likes: msg.likes + 1 }
+          ? {
+              ...msg,
+              reactions: {
+                ...msg.reactions,
+                [emoji]: (msg.reactions[emoji] || 0) + 1,
+              },
+            }
           : msg
       )
     );
+
+    setOpenReactionId(null);
   };
 
   return (
@@ -54,12 +65,44 @@ function App() {
                 <p>{msg.text}</p>
               </div>
 
-              <button
-                className="like-button"
-                onClick={() => likeMessage(msg.id)}
-              >
-                ❤️ {msg.likes}
-              </button>
+              <div className="message-actions">
+                <button
+                  className="reaction-button"
+                  onClick={() =>
+                    setOpenReactionId(
+                      openReactionId === msg.id ? null : msg.id
+                    )
+                  }
+                >
+                  😊 React
+                </button>
+
+                {openReactionId === msg.id && (
+                  <div className="reaction-picker">
+                    {reactionEmojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        className="emoji-option"
+                        onClick={() => addReaction(msg.id, emoji)}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="reaction-list">
+                {Object.entries(msg.reactions).map(([emoji, count]) => (
+                  <button
+                    key={emoji}
+                    className="reaction-count"
+                    onClick={() => addReaction(msg.id, emoji)}
+                  >
+                    {emoji} {count}
+                  </button>
+                ))}
+              </div>
             </div>
           ))
         )}
